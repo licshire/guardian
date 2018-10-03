@@ -21,6 +21,7 @@ import (
 	"github.com/burntsushi/toml"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
 )
 
@@ -370,4 +371,19 @@ func startContainerd(runDir string) *gexec.Session {
 	containerdConfig := containerdrunner.ContainerdConfig(runDir)
 	config.ContainerdSocket = containerdConfig.GRPC.Address
 	return containerdrunner.NewSession(runDir, containerdConfig)
+}
+
+func containerReadFile(container garden.Container, filePath, user string) (garden.Process, *gbytes.Buffer) {
+	output := gbytes.NewBuffer()
+	process, err := container.Run(garden.ProcessSpec{
+		Path: "cat",
+		Args: []string{filePath},
+		User: user,
+	}, garden.ProcessIO{
+		Stdout: io.MultiWriter(GinkgoWriter, output),
+		Stderr: io.MultiWriter(GinkgoWriter, output),
+	})
+	Expect(err).ToNot(HaveOccurred())
+
+	return process, output
 }

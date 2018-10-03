@@ -5,7 +5,6 @@ package gqt_test
 import (
 	"bufio"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -16,7 +15,6 @@ import (
 	"code.cloudfoundry.org/guardian/gqt/runner"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/onsi/gomega/gbytes"
 	"golang.org/x/sys/unix"
 )
 
@@ -178,7 +176,7 @@ var _ = Describe("Bind mount", func() {
 		})
 
 		It("those extra options are not lost through remounting", func() {
-			mountOpts := parseMountsFile(container)
+			mountOpts := parseMountsOptions(container)
 
 			Expect(mountOpts).To(ContainSubstring("noexec"))
 			Expect(mountOpts).To(ContainSubstring("ro"))
@@ -357,21 +355,6 @@ func userReadFile(container garden.Container, dstPath, fileName, user string) ga
 	return process
 }
 
-func containerReadFile(container garden.Container, filePath, user string) (garden.Process, *gbytes.Buffer) {
-	output := gbytes.NewBuffer()
-	process, err := container.Run(garden.ProcessSpec{
-		Path: "cat",
-		Args: []string{filePath},
-		User: user,
-	}, garden.ProcessIO{
-		Stdout: io.MultiWriter(GinkgoWriter, output),
-		Stderr: io.MultiWriter(GinkgoWriter, output),
-	})
-	Expect(err).ToNot(HaveOccurred())
-
-	return process, output
-}
-
 func userWriteFile(container garden.Container, dstPath, user string) garden.Process {
 	filePath := filepath.Join(dstPath, "can-touch-this")
 
@@ -402,7 +385,7 @@ func userWriteToFile(container garden.Container, filePath, user string) garden.P
 	return process
 }
 
-func parseMountsFile(container garden.Container) string {
+func parseMountsOptions(container garden.Container) string {
 	process, output := containerReadFile(container, "/proc/self/mounts", "root")
 	Expect(process.Wait()).To(Equal(0))
 

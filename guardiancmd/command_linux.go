@@ -169,7 +169,7 @@ func initBindMountAndPath(initPathOnHost string) (specs.Mount, string) {
 	}, initPathInContainer
 }
 
-func defaultBindMounts() []specs.Mount {
+func getDefaultMounts() []specs.Mount {
 	devptsGid := 0
 	if runningAsRoot() {
 		devptsGid = 5
@@ -220,6 +220,10 @@ func wireMounts() bundlerules.Mounts {
 	return bundlerules.Mounts{
 		MountOptionsGetter: bundlerules.UnprivilegedMountFlagsGetter,
 	}
+}
+
+func wireTmpfs() rundmc.BundlerRule {
+	return bundlerules.Tmpfs{}
 }
 
 func wireContainerd(socket string, bndlLoader *goci.BndlLoader, processBuilder *processes.ProcBuilder, userLookupper users.UserLookupper, wireExecer func(pidGetter runrunc.PidGetter) *runrunc.Execer, statser runcontainerd.Statser, useContainerdForProcesses bool) (*runcontainerd.RunContainerd, *runcontainerd.RunContainerPea, *runcontainerd.PidGetter, error) {
