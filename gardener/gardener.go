@@ -225,6 +225,7 @@ func (g *Gardener) Create(containerSpec garden.ContainerSpec) (ctr garden.Contai
 		Privileged: containerSpec.Privileged,
 		Env:        containerSpec.Env,
 		BindMounts: containerSpec.BindMounts,
+		Tmpfs:      containerSpec.Tmpfs,
 		Limits:     containerSpec.Limits,
 		BaseConfig: runtimeSpec,
 	}

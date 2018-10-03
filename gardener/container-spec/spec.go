@@ -44,6 +44,8 @@ type DesiredContainerSpec struct {
 	// Bind mounts
 	BindMounts []garden.BindMount
 
+	Tmpfs []garden.Tmpfs
+
 	Env []string
 
 	// Container is privileged

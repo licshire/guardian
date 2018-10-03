@@ -110,6 +110,10 @@ func wireMounts() bundlerules.Mounts {
 	return bundlerules.Mounts{MountOptionsGetter: noopMountOptionsGetter}
 }
 
+func wireTmpfs() rundmc.BundlerRule {
+	return &bundlerules.Noop{}
+}
+
 // Note - it's not possible to bind mount a single file in Windows, so we are
 // using a directory instead
 func initBindMountAndPath(initPathOnHost string) (specs.Mount, string) {
@@ -122,7 +126,7 @@ func initBindMountAndPath(initPathOnHost string) (specs.Mount, string) {
 	}, initPathInContainer
 }
 
-func defaultBindMounts() []specs.Mount {
+func getDefaultMounts() []specs.Mount {
 	return []specs.Mount{}
 }
 

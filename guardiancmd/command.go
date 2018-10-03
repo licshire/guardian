@@ -780,7 +780,7 @@ func (cmd *ServerCommand) wireContainerizer(log lager.Logger, factory GardenFact
 
 	initMount, initPath := initBindMountAndPath(cmd.Bin.Init.Path())
 
-	defaultMounts := append(defaultBindMounts(), initMount)
+	defaultMounts := append(getDefaultMounts(), initMount)
 	privilegedMounts := append(defaultMounts, privilegedMounts()...)
 	unprivilegedMounts := append(defaultMounts, unprivilegedMounts()...)
 
@@ -844,6 +844,7 @@ func (cmd *ServerCommand) wireContainerizer(log lager.Logger, factory GardenFact
 			Path: cgroupRootPath,
 		},
 		wireMounts(),
+		wireTmpfs(),
 		bundlerules.Env{},
 		bundlerules.Hostname{},
 		bundlerules.Windows{},
