@@ -72,6 +72,52 @@ var _ = Describe("Run", func() {
 		),
 	)
 
+	Context("leaking test", func() {
+		var (
+			container garden.Container
+			handle    string
+		)
+
+		BeforeEach(func() {
+			var err error
+			config.DebugIP = "0.0.0.0"
+			config.DebugPort = intptr(8080 + GinkgoParallelNode())
+			client = runner.Start(config)
+			handle = fmt.Sprintf("goroutine-leak-test-%d", GinkgoParallelNode())
+			container, err = client.Create(garden.ContainerSpec{
+				Handle: handle,
+				Limits: garden.Limits{
+					Pid: garden.PidLimits{
+						Max: 1,
+					},
+				},
+			})
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		FIt("should not leak goroutines", func() {
+			var numGoRoutines = func() int {
+				numGoroutines, err := client.NumGoroutines()
+				Expect(err).NotTo(HaveOccurred())
+				return numGoroutines
+			}
+
+			numGoroutinesBefore := numGoRoutines()
+			process, err := container.Run(garden.ProcessSpec{
+				Path: "/bin/ls",
+				Args: []string{"/"},
+			}, garden.ProcessIO{
+				Stdout: GinkgoWriter,
+				Stderr: GinkgoWriter,
+			})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(process.Wait()).To(Equal(0))
+
+			Expect(client.Destroy(handle)).To(Succeed())
+			Eventually(numGoRoutines).Should(BeNumerically("<=", numGoroutinesBefore))
+		})
+	})
+
 	Describe("when we wait for process", func() {
 		var (
 			container   garden.Container
