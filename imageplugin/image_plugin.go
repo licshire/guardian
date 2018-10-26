@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os/exec"
 	"strings"
+	"syscall"
 
 	"code.cloudfoundry.org/commandrunner"
 	"code.cloudfoundry.org/garden"
@@ -85,7 +86,7 @@ func (p *ImagePlugin) Create(log lager.Logger, handle string, spec gardener.Root
 	createCmd.Stdout = stdoutBuffer
 	createCmd.Stderr = lagregator.NewRelogger(log)
 
-	if err := p.CommandRunner.Run(createCmd); err != nil {
+	if err := p.runAsMaximus(createCmd); err != nil {
 		logData := lager.Data{"action": "create", "stdout": stdoutBuffer.String()}
 		log.Error("image-plugin-result", err, logData)
 		return errs(err, fmt.Sprintf("running image plugin create: %s", stdoutBuffer.String()))
@@ -128,7 +129,7 @@ func (p *ImagePlugin) Destroy(log lager.Logger, handle string) error {
 		destroyCmd.Stdout = stdoutBuffer
 		destroyCmd.Stderr = lagregator.NewRelogger(log)
 
-		if err := p.CommandRunner.Run(destroyCmd); err != nil {
+		if err := p.runAsMaximus(destroyCmd); err != nil {
 			logData := lager.Data{"action": "destroy", "stdout": stdoutBuffer.String()}
 			log.Error("image-plugin-result", err, logData)
 			return errorwrapper.Wrapf(err, "running image plugin destroy: %s", stdoutBuffer.String())
@@ -158,7 +159,7 @@ func (p *ImagePlugin) Metrics(log lager.Logger, handle string, namespaced bool) 
 	metricsCmd.Stdout = stdoutBuffer
 	metricsCmd.Stderr = lagregator.NewRelogger(log)
 
-	if err := p.CommandRunner.Run(metricsCmd); err != nil {
+	if err := p.runAsMaximus(metricsCmd); err != nil {
 		logData := lager.Data{"action": "metrics", "stdout": stdoutBuffer.String()}
 		log.Error("image-plugin-result", err, logData)
 		return garden.ContainerDiskStat{}, errorwrapper.Wrapf(err, "running image plugin metrics: %s", stdoutBuffer.String())
@@ -178,4 +179,10 @@ func (p *ImagePlugin) Metrics(log lager.Logger, handle string, namespaced bool) 
 
 func (p *ImagePlugin) GC(log lager.Logger) error {
 	return nil
+}
+
+func (p *ImagePlugin) runAsMaximus(cmd *exec.Cmd) error {
+	cmd.SysProcAttr = &syscall.SysProcAttr{}
+	cmd.SysProcAttr.Credential = &syscall.Credential{Uid: 4294967294, Gid: 4294967294}
+	return p.CommandRunner.Run(cmd)
 }

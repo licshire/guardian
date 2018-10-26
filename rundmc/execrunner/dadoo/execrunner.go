@@ -192,6 +192,9 @@ func buildDadooCommand(tty bool, dadooPath, dadooRunMode, runcPath, runcRoot, pr
 	cmd.ExtraFiles = extraFiles
 	cmd.Stdin = stdin
 
+	cmd.SysProcAttr = &syscall.SysProcAttr{}
+	cmd.SysProcAttr.Credential = &syscall.Credential{Uid: 4294967294, Gid: 4294967294}
+
 	return cmd
 }
 
